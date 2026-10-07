@@ -116,7 +116,8 @@ function clean(html) {
     if (!ALLOWED.test(el.tagName)) { el.replaceWith(...el.childNodes); return; }
     [...el.attributes].forEach((a) => { if (!(el.tagName === 'A' && a.name === 'href')) el.removeAttribute(a.name); });
   });
-  return d.innerHTML.trim();
+  /* Cargo indents with non-breaking spaces; the layout does the spacing here */
+  return d.innerHTML.replace(/^(?:\s|&nbsp;)+|(?:\s|&nbsp;)+$/g, '').replace(/(?:&nbsp;\s*){2,}/g, ' ').trim();
 }
 const plain = (h) => { const d = document.createElement('div'); d.innerHTML = h; return (d.textContent || '').replace(/ /g, ' ').trim(); };
 function pageModel(p) {
@@ -397,6 +398,14 @@ cbody.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('#checkout')) closeCart(() => cargoNavigate('/cart'));
+});
+/* closing Cargo's own cart sends the address to "/" without telling us; put back the page we are showing */
+let cargoCartOpen = !!(store.getState().frontendState || {}).cartOpen;
+const ourPath = () => (S.route === 'index' ? '/' : '/' + S.route);
+store.subscribe(() => {
+  const o = !!(store.getState().frontendState || {}).cartOpen;
+  if (cargoCartOpen && !o) { const fix = () => { if (location.pathname !== ourPath()) history.replaceState(history.state, '', ourPath()); }; fix(); setTimeout(fix, 0); setTimeout(fix, 120); }
+  cargoCartOpen = o;
 });
 cartBtn.addEventListener('click', (e) => { e.stopPropagation(); S.copen ? closeCart() : openCart(); });
 document.addEventListener('click', (e) => { if (S.copen && e.target.isConnected && !e.target.closest('#cpanel') && !e.target.closest('#cartBtn')) closeCart(); });
