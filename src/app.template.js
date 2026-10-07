@@ -55,7 +55,7 @@ const CATS = ['all', 'object', 'wearable', 'art', 'documentation'];
 const CAT_ALIAS = { sculpture: 'art', 'mixed media': 'art', 'fine art': 'art' };
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, title: p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
 }
 async function loadIndex() {
   let r = [];
