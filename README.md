@@ -21,7 +21,7 @@ Cargo loads the build through a small loader pasted once into Site Settings → 
 
 ## Content model in Cargo
 
-Each work is a Cargo page. Set its tags in the page list: right-click the page → Settings… → Tags (separate by comma), then **Publish changes**. The tags fill the index: `cat:` (object, wearable, art, documentation; old `sculpture` and `mixed media` tags read as art), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title; no commas, since commas separate tags), `name:` (shown title when it should differ from the Cargo page title, e.g. two pages both shown as burner), and flags `roman` (title not italic), `dark`, `contain`, `inquire`, `draft` (keeps it off the index).
+Each work is a Cargo page. Set its tags in the page list: right-click the page → Settings… → Tags (separate by comma), then **Publish changes**. The tags fill the index: `cat:` (object, wearable, art, documentation; old `sculpture` and `mixed media` tags read as art), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title; no commas, since commas separate tags), `d:` (finish date YYMMDD or YYMM, sets index order), `name:` (shown title when it should differ from the Cargo page title, e.g. two pages both shown as burner), and flags `roman` (title not italic), `dark`, `contain`, `inquire`, `draft` (keeps it off the index).
 
 - A work must **not** be hidden in Cargo: Cargo's public page list leaves hidden pages out. Cargo's own rendering is replaced, so showing them changes nothing visible.
 - The index follows Cargo's page order (drag pages in the page list).

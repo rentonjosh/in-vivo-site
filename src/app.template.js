@@ -50,12 +50,17 @@ function parseTags(tags) {
   return o;
 }
 let ITEMS = [], ABOUT = null;
+/* index order: work in process and policy last; otherwise newest finish date first (d:YYMMDD or YYMM tag, else a 20xx year in sub:),
+   undated finished work (ongoing production) on top; ties: the page added to Cargo last comes first */
+const finishOf = (i) => { const d = String(i.d || ''); if (/^\d{4,6}$/.test(d)) return +d.padEnd(6, '0'); const y = String(i.sub || '').match(/\b20(\d\d)\b/); return y ? +(y[1] + '0000') : 999999; };
+const groupOf = (i) => (/^(process|policy)$/i.test(i.reg) ? 1 : 0);
+const byFinish = (a, b) => groupOf(a) - groupOf(b) || finishOf(b) - finishOf(a) || (b.sort || 0) - (a.sort || 0);
 const CATS = ['all', 'object', 'wearable', 'art', 'documentation'];
 /* sculpture and mixed media were merged into art (261006); old tags still count */
 const CAT_ALIAS = { sculpture: 'art', 'mixed media': 'art', 'fine art': 'art' };
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, d: /^\d{4,6}$/.test(tg.d || '') ? tg.d : '', title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, d: /^\d{4,6}$/.test(tg.d || '') ? tg.d : '', title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, d: tg.d || '', thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
 }
 async function loadIndex() {
   let r = [];
@@ -64,7 +69,7 @@ async function loadIndex() {
   /* Cargo only lists pages that are not hidden. A work is any listed page with a cat: tag, in Cargo's page order; a draft tag keeps it out */
   const about = r.find((p) => parseTags(p.tags).about) || r.find((p) => /^about(-\d+)?$/i.test(p.purl || ''));
   ABOUT = about ? about.purl : 'about';
-  ITEMS = r.map(itemFrom).filter((i) => i.cat && !i.draft && i.page !== ABOUT).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  ITEMS = r.map(itemFrom).filter((i) => i.cat && !i.draft && i.page !== ABOUT).sort(byFinish);
   /* index order: newest first by finish date (d:YYMMDD or YYMM tag, else the year in sub), undated works ahead of dated ones,
      process items last; Cargo's page order breaks ties */
   const when = (i) => { if (/^process$/i.test(i.reg)) return -2; if (i.d) return +(i.d + '0000').slice(0, 6); const y = (i.sub || '').match(/\b(20\d\d)\b/); return y ? +(y[1].slice(2) + '0000') : 999999; };
