@@ -38,22 +38,24 @@ const imgURL = (m, w = 1400) => (m && m.hash ? `https://freight.cargo.site/w/${w
 /* page tags carry the index fields: cat:sculpture reg:fine art cy:958421 sub:42, 46, 49mm, plus flags roman, dark, contain, inquire */
 function parseTags(tags) {
   const o = {};
-  (tags || []).forEach((tg) => { const m = String(tg).match(/^\s*([a-z]+)\s*:\s*(.*)$/i); if (m) o[m[1].toLowerCase()] = m[2].trim(); else o[String(tg).trim().toLowerCase()] = true; });
+  /* Cargo gives tags as {tag, url} objects */
+  (tags || []).forEach((x) => { const tg = String(x && typeof x === 'object' ? (x.tag || x.name || '') : x); const m = tg.match(/^\s*([a-z]+)\s*:\s*(.*)$/i); if (m) o[m[1].toLowerCase()] = m[2].trim(); else if (tg.trim()) o[tg.trim().toLowerCase()] = true; });
   return o;
 }
 let ITEMS = [], ABOUT = null;
 const CATS = ['all', 'object', 'wearable', 'sculpture', 'mixed media', 'documentation'];
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, title: p.title, sort: p.sort, cat: tg.cat || '', reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, title: p.title, sort: p.sort, cat: tg.cat || '', reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
 }
 async function loadIndex() {
   let r = [];
   try { r = await fetch(`${API}/pages/${siteId()}/thumbs/all?limit=999`).then((x) => x.json()); } catch (e) { r = []; }
   if (!Array.isArray(r)) r = [];
-  const about = r.find((p) => (p.purl || '').toLowerCase() === 'about');
-  ABOUT = about ? about.purl : null;
-  ITEMS = r.filter((p) => p.display !== false).map(itemFrom).filter((i) => i.cat).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  /* Cargo only lists pages that are not hidden. A work is any listed page with a cat: tag, in Cargo's page order; a draft tag keeps it out */
+  const about = r.find((p) => parseTags(p.tags).about) || r.find((p) => /^about(-\d+)?$/i.test(p.purl || ''));
+  ABOUT = about ? about.purl : 'about';
+  ITEMS = r.map(itemFrom).filter((i) => i.cat && !i.draft && i.page !== ABOUT).sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 {{esc}}
 
@@ -122,10 +124,13 @@ function pageModel(p) {
   const images = [...r.querySelectorAll('media-item')].map((el) => ({ m: byHash[el.getAttribute('hash')], cap: (el.getAttribute('caption') || '').trim() })).filter((x) => x.m && x.m.is_image !== false);
   const products = [...r.querySelectorAll('shop-product')].map((el) => ({ product: el.getAttribute('product'), variant: el.getAttribute('variant') })).filter((x) => x.product);
   r.querySelectorAll('media-item, shop-product, style, script, [class*="gallery"], gallery-grid, gallery-slideshow, gallery-columnized, gallery-justify, gallery-freeform').forEach((el) => el.remove());
+  /* old page chrome: links back to the home page ("in vivo", "back home"); the new header replaces them */
+  r.querySelectorAll('a[href]').forEach((a) => { try { const u = new URL(a.getAttribute('href'), location.href); if (/^\/?$/.test(u.pathname) && (u.host === location.host || /(^|\.)invivo\.works$/.test(u.host))) a.remove(); } catch (e) {} });
+  const skip = new Set(['in vivo', String(p.title || '').toLowerCase()]);
   const flat = r.innerHTML
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(div|p|h[1-6]|li|ul|ol|blockquote|column-set|column-unit|section)\b[^>]*>/gi, '\n');
-  const lines = flat.split('\n').map((s) => clean(s)).filter((s) => plain(s));
+  const lines = flat.split('\n').map((s) => clean(s)).filter((s) => plain(s) && !skip.has(plain(s).toLowerCase().replace(/\s+/g, ' ')));
   /* a short lowercase line on its own is a section label; "label: value" is an info row; anything else is a paragraph */
   const groups = []; let cur = null;
   const open = (label) => { cur = { label, rows: [] }; groups.push(cur); };
