@@ -93,8 +93,10 @@ async function loadPage(purl) {
   if (!p) {
     p = await new Promise((res) => {
       const un = store.subscribe(() => { const q = findCargoPage(purl); if (q) { un(); clearTimeout(to); res(q); } });
-      const to = setTimeout(() => { un(); res(null); }, 6000);
-      cargoNavigate('/' + purl);
+      /* on a direct load Cargo is already fetching this page itself; navigating to the same path is a no-op, so just wait */
+      const here = decodeURIComponent(location.pathname.replace(/^\/+/, '').split('/')[0] || '').toLowerCase() === purl.toLowerCase();
+      const to = setTimeout(() => { un(); res(findCargoPage(purl) || null); }, here ? 15000 : 8000);
+      if (!here) cargoNavigate('/' + purl);
     });
   }
   if (p) pageCache[purl] = p;
