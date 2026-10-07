@@ -48,4 +48,4 @@ Each work is a Cargo page. Set its tags in the page list: right-click the page â
 - Bars are pills: 36px desktop, 44px phone. Photo radius is half the bar height.
 - Every animation has a reduced-motion fallback (fades only).
 
-- Index order: newest first by finish date. Tag `d:YYMMDD` (or `d:YYMM`); otherwise the year in `sub:` counts. Undated works sit at the top, `reg:process` works at the end, and Cargo's page order breaks ties.
+- Index order: newest first by finish date. Tag `d:YYMMDD` (or `d:YYMM`); otherwise the year in `sub:` counts. Undated works sit at the top, `reg:process` works at the end, `reg:policy` too, and ties put the page added to Cargo last first.
