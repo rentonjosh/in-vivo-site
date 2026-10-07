@@ -127,11 +127,18 @@ function clean(html) {
   return d.innerHTML.replace(/^(?:\s|&nbsp;)+|(?:\s|&nbsp;)+$/g, '').replace(/(?:&nbsp;\s*){2,}/g, ' ').trim();
 }
 const plain = (h) => { const d = document.createElement('div'); d.innerHTML = h; return (d.textContent || '').replace(/ /g, ' ').trim(); };
+/* an image linked to another page of the site (a Cargo media link) stays a link; outside links are dropped */
+function linkOf(h) {
+  if (!h) return '';
+  try { const u = new URL(h, location.origin + '/'); if (u.origin === location.origin || /(^|\.)invivo\.works$/.test(u.host)) return u.pathname.replace(/^\/+/, ''); } catch (e) {}
+  return '';
+}
+const linked = (html, href) => (href ? html.replace(/^<div /, `<a href="/${esc(href)}" `).replace(/<\/div>$/, '</a>') : html);
 function pageModel(p) {
   const doc = new DOMParser().parseFromString(`<div id="r">${p.content || ''}</div>`, 'text/html');
   const r = doc.getElementById('r');
   const byHash = {}; (p.media || []).forEach((m) => { byHash[m.hash] = m; });
-  const images = [...r.querySelectorAll('media-item')].map((el) => ({ m: byHash[el.getAttribute('hash')], cap: (el.getAttribute('caption') || '').trim() })).filter((x) => x.m && x.m.is_image !== false);
+  const images = [...r.querySelectorAll('media-item')].map((el) => ({ m: byHash[el.getAttribute('hash')], cap: (el.getAttribute('caption') || el.querySelector('figcaption')?.textContent || '').replace(/\s+/g, ' ').trim(), href: linkOf(el.getAttribute('href')) })).filter((x) => x.m && x.m.is_image !== false);
   const products = [...r.querySelectorAll('shop-product')].map((el) => ({ product: el.getAttribute('product'), variant: el.getAttribute('variant') })).filter((x) => x.product);
   r.querySelectorAll('media-item, shop-product, style, script, [class*="gallery"], gallery-grid, gallery-slideshow, gallery-columnized, gallery-justify, gallery-freeform').forEach((el) => el.remove());
   /* old page chrome: links back to the home page ("in vivo", "back home"); the new header replaces them */
@@ -142,18 +149,27 @@ function pageModel(p) {
     .replace(/<\/?(div|p|h[1-6]|li|ul|ol|blockquote|column-set|column-unit|section)\b[^>]*>/gi, '\n');
   const lines = flat.split('\n').map((s) => clean(s)).filter((s) => plain(s) && !skip.has(plain(s).toLowerCase().replace(/\s+/g, ' ')));
   /* a short lowercase line on its own is a section label; "label: value" is an info row; anything else is a paragraph */
+  /* a line starting with * is a footnote (shown small, after the info, with the red asterisk) */
+  const notes = [];
   const groups = []; let cur = null;
   const open = (label) => { cur = { label, rows: [] }; groups.push(cur); };
   lines.forEach((h) => {
     const txt = plain(h);
+    if (/^[*\u2731\u273b]/.test(txt)) { notes.push(clean(h.replace(/^\s*(?:\*|\u2731|\u273b|&nbsp;)+\s*/, ''))); return; }
     const kvm = txt.match(/^([^:]{1,32}):\s+(.+)$/);
     if (/^[a-z][a-z /&]{0,30}$/.test(txt) && txt.split(' ').length <= 3 && !kvm) { open(txt); return; }
     if (!cur) open('information');
     if (kvm) { const i = h.indexOf(':'); cur.rows.push({ k: esc(kvm[1].trim()), v: h.slice(i + 1).trim() }); }
     else cur.rows.push({ p: h });
   });
-  return { images, products, groups };
+  /* "price: $3,600" on an inquiry work moves into the inquire bar */
+  let price = '';
+  groups.forEach((g) => { g.rows = g.rows.filter((x) => { if (x.k && /^price$/i.test(plain(x.k))) { price = plain(x.v); return false; } return true; }); });
+  return { images, products, groups, notes, price };
 }
+/* the six-spoke asterisk, red, drawn so it never depends on a font */
+const AST = '<svg class="ast" viewBox="0 0 12 12" aria-hidden="true"><g stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 1.2v9.6"/><path d="M1.84 3.6l8.32 4.8"/><path d="M1.84 8.4l8.32-4.8"/></g></svg>';
+const notesHTML = (notes) => (notes.length ? `<div class="notes">${notes.map((n) => `<p class="note">${AST}<span>${n}</span></p>`).join('')}</div>` : '');
 function groupsHTML(groups) {
   return groups.filter((g) => g.rows.length).map((g) => {
     let out = '', kvs = [];
@@ -184,7 +200,9 @@ function buyHTML(model, item) {
   }
   if (item && item.inquire) {
     const ed = model.groups.flatMap((g) => g.rows).find((x) => x.k && /^edition$/i.test(x.k));
-    return cta('inquire', ed ? plain(ed.v) : '→', `mailto:contact@invivo.works?subject=${encodeURIComponent(item.title)}`);
+    const href = `mailto:contact@invivo.works?subject=${encodeURIComponent(item.title)}`;
+    if (model.price) return `<section class="buy cta fadein"><a class="add priced" href="${href}"><span class="pr">${esc(model.price)}${AST}</span><span class="r">inquire now</span></a></section>`;
+    return cta('inquire', ed ? plain(ed.v) : '→', href);
   }
   return '';
 }
@@ -198,9 +216,9 @@ function pageHTML(p, item) {
   const it = item ? item.it : false;
   const bg = item && item.dark ? '#0e0e0e' : '#ececec';
   const [f, ...rest] = model.images;
-  const first = f ? img(imgURL(f.m, 1600), esc(title), imgClass(f.m, true), '', bg, esc(f.cap)) : '';
-  const imgs = rest.map((x) => img(imgURL(x.m, 1400), esc(title), imgClass(x.m, false), '', bg, esc(x.cap))).join('');
-  return splitHTML(esc(title), it, groupsHTML(model.groups), buyHTML(model, item), imgs, first, item && item.sub ? esc(item.sub) : '');
+  const first = f ? linked(img(imgURL(f.m, 1600), esc(title), imgClass(f.m, true), '', bg, esc(f.cap)), f.href) : '';
+  const imgs = rest.map((x) => linked(img(imgURL(x.m, 1400), esc(title), imgClass(x.m, false), '', bg, esc(x.cap)), x.href)).join('');
+  return splitHTML(esc(title), it, groupsHTML(model.groups) + notesHTML(model.notes), buyHTML(model, item), imgs, first, item && item.sub ? esc(item.sub) : '');
 }
 
 {{panel}}
