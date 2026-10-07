@@ -86,7 +86,7 @@ a.row:hover{background:rgba(255,255,255,.75)}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--g)}
 .tile{position:relative;display:block;aspect-ratio:2/3;max-width:100%;overflow:hidden;border-radius:var(--r);background:var(--solid);cursor:pointer}
 .tile[hidden]{display:none!important}
-.media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.media{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .contain{object-fit:contain;padding:8%}
 .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:var(--muted)}
 .tile .media{transition:transform .7s var(--ease)}
@@ -140,6 +140,10 @@ a.img{display:block;color:inherit}
 .img.pano{grid-column:1 / -1;aspect-ratio:2500/989}
 .img.land{grid-column:1 / -1;aspect-ratio:3/2}
 .img.sq{aspect-ratio:1/1}
+.img.w2{aspect-ratio:2/1}
+/* the image section is a masonry of mixed frames (2:1, 1:1, 2:3), read top to bottom per column */
+.imgs{display:block;columns:3;column-gap:var(--g)}
+.imgs > .img{break-inside:avoid;margin-bottom:var(--g)}
 /* concentric with the photo's corner: inset = photo radius - circle radius, so the gap is even all the way round */
 .iinfo{--ib:28px;position:absolute;right:calc(var(--r) - var(--ib) / 2);bottom:calc(var(--r) - var(--ib) / 2);z-index:3;display:flex;align-items:flex-end;justify-content:flex-end;width:var(--ib);height:var(--ib);border-radius:calc(var(--ib) / 2);overflow:hidden;background:var(--frost);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 0 0 .5px rgba(0,0,0,.06)}
 .iinfo.open{width:auto;height:auto;max-width:calc(100% - 2 * (var(--r) - var(--ib) / 2))}
@@ -190,3 +194,5 @@ a.img{display:block;color:inherit}
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+@media (max-width:1080px){.imgs{columns:2}}
+@media (max-width:720px){.imgs{columns:1}}

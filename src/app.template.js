@@ -118,7 +118,7 @@ const S = { route: 'index', filter: 'all', open: false, cart: 0, indexY: 0, from
 /* ---------- views ---------- */
 function tileHTML(i, k) {
   const media = i.img ? `<img class="media${i.fit === 'contain' ? ' contain' : ''}" src="${i.img}"${setOf(i.img) ? ` srcset="${setOf(i.img)}" sizes="${SIZES_TILE}"` : ''} alt="${esc(i.title)}" loading="lazy" decoding="async">` : `<span class="ph">${esc(i.title)}</span>`;
-  return `<a class="tile" data-k="${k}" data-cat="${esc(i.cat)}" href="/${esc(i.page)}" style="background:${i.dark ? '#0e0e0e' : (i.fit === 'contain' ? '#f2f2f2' : '#ececec')}">${media}<span class="cap frost"><span>${t(i)}</span>${i.sub ? `<span class="sub">${esc(i.sub)}</span>` : ''}</span></a>`;
+  return `<a class="tile" data-k="${k}" data-cat="${esc(i.cat)}" href="/${esc(i.page)}" style="background:${i.dark ? '#0e0e0e' : '#f2f2f2'}">${media}<span class="cap frost"><span>${t(i)}</span>${i.sub ? `<span class="sub">${esc(i.sub)}</span>` : ''}</span></a>`;
 }
 function indexHTML() {
   if (!ITEMS.length) return `<section class="grid" id="grid" aria-label="Works"></section><p class="empty">No works yet. Tag a Cargo page with cat: to add it here.</p>`;
@@ -190,11 +190,11 @@ function groupsHTML(groups) {
     return grp(esc(g.label), out);
   }).join('');
 }
+/* frames snap to the nearest of 2:1, 1:1, 2:3 (geometric midpoints); the image is always contained, never cropped */
 function imgClass(m, first) {
-  const ratio = m.width && m.height ? m.width / m.height : 0.66;
-  if (ratio >= 1.25) return first ? 'land first' : 'land';
-  if (ratio >= 0.85) return first ? 'first' : 'sq';
-  return first ? 'first' : '';
+  const ratio = m.width && m.height ? m.width / m.height : 2 / 3;
+  const shape = ratio >= Math.SQRT2 ? 'w2' : ratio >= Math.sqrt(2 / 3) ? 'sq' : '';
+  return [shape, first ? 'first' : ''].filter(Boolean).join(' ');
 }
 function buyHTML(model, item) {
   const pr = model.products[0];
@@ -226,7 +226,7 @@ function pageHTML(p, item) {
   if (item && item.inquire && model.price) model.groups.forEach((g) => { g.rows = g.rows.filter((x) => !(x.k && /^price$/i.test(plain(x.k)))); });
   const title = item ? item.title : p.title;
   const it = item ? item.it : false;
-  const bg = item && item.dark ? '#0e0e0e' : '#ececec';
+  const bg = item && item.dark ? '#0e0e0e' : '#f2f2f2';
   const [f, ...rest] = model.images;
   const first = f ? linked(img(imgURL(f.m, 1600), esc(title), imgClass(f.m, true), '', bg, esc(f.cap)), f.href) : '';
   const imgs = rest.map((x) => linked(img(imgURL(x.m, 1400), esc(title), imgClass(x.m, false), '', bg, esc(x.cap)), x.href)).join('');
@@ -262,9 +262,28 @@ function routeFromPath() {
   if (!known) { const t = oldTarget(seg); if (t) { history.replaceState(history.state, '', t === 'index' ? '/' : '/' + t); seg = t; } }
   return seg;
 }
+function firstImageOf(pg) {
+  const byHash = {}; (pg.media || []).forEach((m) => { byHash[m.hash] = m; });
+  for (const mm of String(pg.content || '').matchAll(/<media-item\b[^>]*\bhash="([^"]+)"/g)) { const m = byHash[mm[1]]; if (m && m.is_image !== false) return m; }
+  return null;
+}
+async function useFirstImages() {
+  await Promise.all(ITEMS.map(async (i) => {
+    try {
+      let pg = pageCache[i.page] || findCargoPage(i.page);
+      if (!pg) { const r = await fetch(`${API}/pages/${siteId()}/url/${encodeURIComponent(i.page)}`); if (!r.ok) return; pg = await r.json(); if (pg && typeof pg.content === 'string') pageCache[i.page] = pg; }
+      const m = pg && firstImageOf(pg);
+      if (!m || (i.thumb && i.thumb.hash === m.hash)) return;
+      i.thumb = m; i.img = imgURL(m, 900);
+      const im = view.querySelector(`.tile[href="/${CSS.escape(i.page)}"] img`);
+      if (im) { im.src = i.img; im.srcset = setOf(i.img); }
+    } catch (e) {}
+  }));
+}
 function renderIndex() {
   S.route = 'index';
   view.innerHTML = indexHTML(); applyFilter(); setDate(today()); setCat(S.filter);
+  useFirstImages();
 }
 async function openPage(purl, tileEl) {
   closePanel();
@@ -288,7 +307,7 @@ async function openPage(purl, tileEl) {
   if (!target) return;
   target.style.visibility = 'hidden';
   view.querySelectorAll('.info, .buy, .imgs .img').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 520, delay: 140, easing: 'ease', fill: 'both' }));
-  flight(fromRect, target, item.img, item.fit, item.dark ? '#0e0e0e' : (item.fit === 'contain' ? '#f2f2f2' : '#e4e0d8'), r0, radiusOf(target), () => { target.style.visibility = ''; });
+  flight(fromRect, target, item.img, item.fit, item.dark ? '#0e0e0e' : '#f2f2f2', r0, radiusOf(target), () => { target.style.visibility = ''; });
 }
 function closePage() {
   ++S.navTok;
@@ -305,7 +324,7 @@ function closePage() {
   if (!tile || tile.hidden) return;
   tile.classList.add('ghost');
   view.querySelectorAll('.tile:not(.ghost)').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 480, delay: 120, fill: 'both' }));
-  flight(heroRect, tile, item.img, item.fit, item.dark ? '#0e0e0e' : (item.fit === 'contain' ? '#f2f2f2' : '#e4e0d8'), r0, radiusOf(tile), () => tile.classList.remove('ghost'));
+  flight(heroRect, tile, item.img, item.fit, item.dark ? '#0e0e0e' : '#f2f2f2', r0, radiusOf(tile), () => tile.classList.remove('ghost'));
 }
 {{info}}
 view.addEventListener('pointerover', (e) => { const tile = e.target.closest('a.tile'); if (tile) { const r = tile.getAttribute('href').slice(1); loadPage(r); } });
