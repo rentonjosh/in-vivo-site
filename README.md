@@ -47,3 +47,5 @@ Each work is a Cargo page. Set its tags in the page list: right-click the page â
 - Selected states share one white fill. Frost is `rgba(242,242,242,.78)` with `blur(18px) saturate(1.2)`.
 - Bars are pills: 36px desktop, 44px phone. Photo radius is half the bar height.
 - Every animation has a reduced-motion fallback (fades only).
+
+- Index order: newest first by finish date. Tag `d:YYMMDD` (or `d:YYMM`); otherwise the year in `sub:` counts. Undated works sit at the top, `reg:process` works at the end, and Cargo's page order breaks ties.

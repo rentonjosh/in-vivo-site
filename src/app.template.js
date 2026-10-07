@@ -55,7 +55,7 @@ const CATS = ['all', 'object', 'wearable', 'art', 'documentation'];
 const CAT_ALIAS = { sculpture: 'art', 'mixed media': 'art', 'fine art': 'art' };
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, d: /^\d{4,6}$/.test(tg.d || '') ? tg.d : '', title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
 }
 async function loadIndex() {
   let r = [];
@@ -65,6 +65,10 @@ async function loadIndex() {
   const about = r.find((p) => parseTags(p.tags).about) || r.find((p) => /^about(-\d+)?$/i.test(p.purl || ''));
   ABOUT = about ? about.purl : 'about';
   ITEMS = r.map(itemFrom).filter((i) => i.cat && !i.draft && i.page !== ABOUT).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  /* index order: newest first by finish date (d:YYMMDD or YYMM tag, else the year in sub), undated works ahead of dated ones,
+     process items last; Cargo's page order breaks ties */
+  const when = (i) => { if (/^process$/i.test(i.reg)) return -2; if (i.d) return +(i.d + '0000').slice(0, 6); const y = (i.sub || '').match(/\b(20\d\d)\b/); return y ? +(y[1].slice(2) + '0000') : 999999; };
+  ITEMS = ITEMS.map((i, n) => ({ i, n, w: when(i) })).sort((a, b) => b.w - a.w || a.n - b.n).map((x) => x.i);
 }
 {{esc}}
 
