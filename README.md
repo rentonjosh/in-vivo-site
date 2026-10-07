@@ -19,14 +19,21 @@ Cargo loads the build through a small loader pasted once into Site Settings → 
 
 ## Content model in Cargo
 
-Each work is a Cargo page. Its tags fill the index: `cat:` (object, wearable, sculpture, mixed media, documentation), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title), and flags `roman` (title not italic), `dark`, `contain`, `inquire`. The first image is the cover; text lines `label: value` become info rows and a short lowercase line on its own starts a section. A Cargo product placed in the page becomes the buy panel.
+Each work is a Cargo page. Set its tags in the page list: right-click the page → Settings… → Tags (separate by comma), then **Publish changes**. The tags fill the index: `cat:` (object, wearable, sculpture, mixed media, documentation), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title; no commas, since commas separate tags), and flags `roman` (title not italic), `dark`, `contain`, `inquire`, `draft` (keeps it off the index).
+
+- A work must **not** be hidden in Cargo: Cargo's public page list leaves hidden pages out. Cargo's own rendering is replaced, so showing them changes nothing visible.
+- The index follows Cargo's page order (drag pages in the page list).
+- The cover is the page's Cargo thumbnail. On the page, the first image leads; text lines `label: value` become info rows and a short lowercase line on its own starts a section. Links back to the home page ("in vivo", "back home") and a line repeating the title are dropped.
+- A Cargo product placed in the page becomes the buy panel, with one row of buttons per option (Size, Color...).
+- The about page: tag it `about` and leave it shown.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `dist/in-vivo.js`, `dist/in-vivo.css` | Stable bootstrap Cargo loads. |
-| `dist/app.js`, `dist/app.css` | The build. |
+| `dist/app.js`, `dist/app.css` | The build the loaders fetch. |
+| `dist/in-vivo.js`, `dist/in-vivo.css` | Retired, empty. |
+| `src/loader-*.html` | What is pasted into Cargo's custom HTML. |
 | `src/` | Sources for the build. |
 | `tools/build.py` | Builds `dist/`. |
 | `reference/prototype.html` | The approved browser prototype. The source of truth for how everything should look and move. Open it in a browser to compare. |
