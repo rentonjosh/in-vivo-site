@@ -27,7 +27,7 @@ Each work is a Cargo page. Set its tags in the page list: right-click the page â
 - The index follows Cargo's page order (drag pages in the page list).
 - The cover is the page's Cargo thumbnail. On the page, the first image leads; text lines `label: value` become info rows and a short lowercase line on its own starts a section. Links back to the home page ("in vivo", "back home") and a line repeating the title are dropped.
 - A Cargo product placed in the page becomes the buy panel, with one row of buttons per option (Size, Color...).
-- The about page: tag it `about` and leave it shown.
+- The about page: tag it `about`.
 
 ## Layout
 
@@ -49,3 +49,9 @@ Each work is a Cargo page. Set its tags in the page list: right-click the page â
 - Every animation has a reduced-motion fallback (fades only).
 
 - Index order: newest first by finish date. Tag `d:YYMMDD` (or `d:YYMM`); otherwise the year in `sub:` counts. Undated works sit at the top, `reg:process` works at the end, `reg:policy` too, and ties put the page added to Cargo last first.
+
+## Data (v0.3.1)
+
+- The app reads every page in one public request, `api.cargo.site/v1/pages/{siteId}/all` (content, images, tags; hidden pages included; works on password sites).
+- A work is any page with a `cat:` tag, shown or hidden in Cargo. Keep new-site pages hidden on the live site until launch so the old design does not stack them; `draft` keeps a page off the new index.
+- Tiles show each page's first image. Every image is contained (never cropped): tiles are 2:3; project images snap to 2:1, 1:1 or 2:3 frames in a masonry section.

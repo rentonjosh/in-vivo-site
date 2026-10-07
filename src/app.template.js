@@ -60,20 +60,26 @@ const CATS = ['all', 'object', 'wearable', 'art', 'documentation'];
 const CAT_ALIAS = { sculpture: 'art', 'mixed media': 'art', 'fine art': 'art' };
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, d: /^\d{4,6}$/.test(tg.d || '') ? tg.d : '', title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, d: tg.d || '', thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, d: /^\d{4,6}$/.test(tg.d || '') ? tg.d : '', title: tg.name || p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, d: tg.d || '', thumb: firstImageOf(p) || p.thumbnail || null, img: imgURL(firstImageOf(p) || p.thumbnail, 900) };
 }
+/* one public request returns every page with its content and images (hidden ones too, and also on password sites);
+   it feeds the index, the tiles' first images and the project pages */
+const ALL = {};
 async function loadIndex() {
   let r = [];
-  try { r = await fetch(`${API}/pages/${siteId()}/thumbs/all?limit=999`).then((x) => x.json()); } catch (e) { r = []; }
-  if (!Array.isArray(r)) r = [];
-  /* Cargo only lists pages that are not hidden. A work is any listed page with a cat: tag, in Cargo's page order; a draft tag keeps it out */
+  try { r = await fetch(`${API}/pages/${siteId()}/all`).then((x) => x.json()); } catch (e) { r = []; }
+  if (Array.isArray(r) && r.length) {
+    r = r.filter((p) => p && p.purl && p.page_type === 'page');
+    r.forEach((p) => { ALL[p.purl] = p; if (typeof p.content === 'string') pageCache[p.purl] = p; });
+  } else {
+    /* fallback: the thumbnail list (shown pages only, no content) */
+    try { r = await fetch(`${API}/pages/${siteId()}/thumbs/all?limit=999`).then((x) => x.json()); } catch (e) { r = []; }
+    if (!Array.isArray(r)) r = [];
+  }
+  /* a work is any page with a cat: tag, shown or hidden in Cargo (hidden keeps it off the old design); draft keeps it out */
   const about = r.find((p) => parseTags(p.tags).about) || r.find((p) => /^about(-\d+)?$/i.test(p.purl || ''));
   ABOUT = about ? about.purl : 'about';
   ITEMS = r.map(itemFrom).filter((i) => i.cat && !i.draft && i.page !== ABOUT).sort(byFinish);
-  /* index order: newest first by finish date (d:YYMMDD or YYMM tag, else the year in sub), undated works ahead of dated ones,
-     process items last; Cargo's page order breaks ties */
-  const when = (i) => { if (/^process$/i.test(i.reg)) return -2; if (i.d) return +(i.d + '0000').slice(0, 6); const y = (i.sub || '').match(/\b(20\d\d)\b/); return y ? +(y[1].slice(2) + '0000') : 999999; };
-  ITEMS = ITEMS.map((i, n) => ({ i, n, w: when(i) })).sort((a, b) => b.w - a.w || a.n - b.n).map((x) => x.i);
 }
 {{esc}}
 
@@ -267,23 +273,9 @@ function firstImageOf(pg) {
   for (const mm of String(pg.content || '').matchAll(/<media-item\b[^>]*\bhash="([^"]+)"/g)) { const m = byHash[mm[1]]; if (m && m.is_image !== false) return m; }
   return null;
 }
-async function useFirstImages() {
-  await Promise.all(ITEMS.map(async (i) => {
-    try {
-      let pg = pageCache[i.page] || findCargoPage(i.page);
-      if (!pg) { const r = await fetch(`${API}/pages/${siteId()}/url/${encodeURIComponent(i.page)}`); if (!r.ok) return; pg = await r.json(); if (pg && typeof pg.content === 'string') pageCache[i.page] = pg; }
-      const m = pg && firstImageOf(pg);
-      if (!m || (i.thumb && i.thumb.hash === m.hash)) return;
-      i.thumb = m; i.img = imgURL(m, 900);
-      const im = view.querySelector(`.tile[href="/${CSS.escape(i.page)}"] img`);
-      if (im) { im.src = i.img; im.srcset = setOf(i.img); }
-    } catch (e) {}
-  }));
-}
 function renderIndex() {
   S.route = 'index';
   view.innerHTML = indexHTML(); applyFilter(); setDate(today()); setCat(S.filter);
-  useFirstImages();
 }
 async function openPage(purl, tileEl) {
   closePanel();
