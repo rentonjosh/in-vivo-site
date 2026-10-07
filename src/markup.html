@@ -1,0 +1,51 @@
+<div class="iv">
+  <div class="head" id="head">
+    <header class="bar bar1" id="bar1">
+      <div class="bar1-bg frost" id="bar1bg" aria-hidden="true"></div>
+      <a class="home" href="#index" id="home" aria-label="in vivo, home"></a>
+      <button class="cartpill" id="cartBtn" aria-label="cart, 0 items" aria-expanded="false" aria-controls="cpanel" hidden><span>cart</span><span id="cartCount">0</span></button>
+      <svg class="morph" id="morph" aria-hidden="true">
+        <defs>
+          <filter id="goo" x="-10%" y="-200%" width="120%" height="500%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0" id="gooBlur" result="b"></feGaussianBlur>
+            <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"></feColorMatrix>
+          </filter>
+          <mask id="hole" maskUnits="userSpaceOnUse" x="-50" y="-50" width="5000" height="300">
+            <rect x="-50" y="-50" width="5000" height="300" fill="#fff"></rect>
+            <circle id="holeC" cx="0" cy="0" r="0" fill="#000"></circle>
+          </mask>
+        </defs>
+        <g mask="url(#hole)" fill="#231f20">
+          <g id="gooG">
+            <g id="letters"></g>
+            <path id="eye"></path>
+          </g>
+        </g>
+      </svg>
+    </header>
+    <div class="row2">
+      <button class="bar frost" id="indexBtn" aria-expanded="false" aria-controls="panel"><span>index</span><span class="glyph" aria-hidden="true">▾</span></button>
+      <div class="bar frost meta" id="meta" aria-live="polite"><span class="cat" id="cat">all</span><span class="date" id="date"></span></div>
+    </div>
+    <div class="panel" id="panel" role="region" aria-label="Index">
+      <div class="panel-shape" id="panelShape"></div>
+      <div class="panel-body" id="panelBody"></div>
+    </div>
+    <div class="panel cpanel" id="cpanel" role="region" aria-label="Cart">
+      <div class="panel-shape" id="cpanelShape"></div>
+      <div class="panel-body" id="cpanelBody"></div>
+    </div>
+  </div>
+
+  <div class="gap"></div>
+  <main id="view"></main>
+
+  <div class="spacer"></div>
+  <footer class="foot">
+    <form class="bar field wide" id="mail"><label class="sr" for="email">Email for updates</label><input id="email" type="email" placeholder="email" autocomplete="email"></form>
+    <button class="bar dark" form="mail" type="submit">updates</button>
+    <a class="bar solid" href="mailto:contact@invivo.works"><span>contact</span><span aria-hidden="true">&lt;o</span></a>
+    <div class="bar solid copy full"><span>© 2026 <span class="wm-inline">in vivo</span>, San Francisco</span></div>
+  </footer>
+</div>
+<div class="toast frost" id="toast" role="status" aria-live="polite"></div>
