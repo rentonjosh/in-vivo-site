@@ -13,7 +13,8 @@ const MARKUP = %%MARKUP%%;
 function whenCargo(cb) {
   const ok = () => window.store && store.getState && store.getState().site && store.getState().site.id;
   /* never run inside Cargo's editor */
-  const editing = () => /^\/edit(\/|$)/.test(location.pathname) || (window.store && store.getState && (store.getState().frontendState || {}).adminMode);
+  const framed = (() => { try { return window.top !== window.self; } catch (e) { return true; } })();
+  const editing = () => framed || /^\/(edit|client-side-rendering)/.test(location.pathname) || (window.store && store.getState && ((store.getState().frontendState || {}).adminMode || (store.getState().frontendState || {}).inAdminFrame));
   if (ok()) { if (!editing()) cb(); return; }
   let n = 0;
   const t = setInterval(() => { if (ok() || ++n > 400) { clearInterval(t); if (ok() && !editing()) cb(); } }, 25);
