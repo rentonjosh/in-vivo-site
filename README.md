@@ -10,7 +10,7 @@ Cargo loads the build through a small loader pasted once into Site Settings → 
 - It never runs inside Cargo's editor (framed preview or `/edit`).
 - The live site's loader only switches on with `?ivdev` in the address (remembered for that browser tab; `?ivdev=0` turns it off). Visitors see the current site.
 - At launch, paste `dist/loader-launch.html` instead. It has no `?ivdev` gate and loads a fixed release tag (no GitHub API call, so no rate limit). To ship a later build: `python3 tools/build.py <version>`, commit, `git tag v<version>`, push the tag, then paste the new `dist/loader-launch.html` and Publish.
-- Old addresses from the previous site (`/about`, `/about-1`, `/art` to the sculpture filter, `/burners` to the burner landing page, `/shop`, `/store`) are rewritten to their new place by the `OLD` table in `src/app.template.js`. `/process` and any other page address open that page if it is tagged; an unknown address falls back to the index.
+- Old addresses from the previous site (`/about`, `/about-1`, `/art` to the art filter, `/burners` to the burner landing page, `/shop`, `/store`) are rewritten to their new place by the `OLD` table in `src/app.template.js`. `/process` and any other page address open that page if it is tagged; an unknown address falls back to the index.
 - Images carry a `srcset` width ladder (480 to 1800) from Cargo's freight server, so phones and desktop columns load only the size they show.
 
 `dist/in-vivo.js` and `dist/in-vivo.css` are retired, empty files kept for old references.
@@ -21,7 +21,7 @@ Cargo loads the build through a small loader pasted once into Site Settings → 
 
 ## Content model in Cargo
 
-Each work is a Cargo page. Set its tags in the page list: right-click the page → Settings… → Tags (separate by comma), then **Publish changes**. The tags fill the index: `cat:` (object, wearable, sculpture, mixed media, documentation), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title; no commas, since commas separate tags), and flags `roman` (title not italic), `dark`, `contain`, `inquire`, `draft` (keeps it off the index).
+Each work is a Cargo page. Set its tags in the page list: right-click the page → Settings… → Tags (separate by comma), then **Publish changes**. The tags fill the index: `cat:` (object, wearable, art, documentation; old `sculpture` and `mixed media` tags read as art), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title; no commas, since commas separate tags), and flags `roman` (title not italic), `dark`, `contain`, `inquire`, `draft` (keeps it off the index).
 
 - A work must **not** be hidden in Cargo: Cargo's public page list leaves hidden pages out. Cargo's own rendering is replaced, so showing them changes nothing visible.
 - The index follows Cargo's page order (drag pages in the page list).

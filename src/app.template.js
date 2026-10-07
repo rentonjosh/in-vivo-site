@@ -42,7 +42,7 @@ const setOf = (u) => (/\/w\/\d+\//.test(u) ? WIDTHS.map((w) => u.replace(/\/w\/\
 const SIZES_TILE = '(max-width:720px) 50vw, (max-width:1080px) 33vw, 25vw';
 const SIZES_IMG = '(max-width:720px) 100vw, (max-width:1080px) 33vw, 25vw';
 const imgURL = (m, w = 1400) => (m && m.hash ? `https://freight.cargo.site/w/${w}/q/75/i/${m.hash}/${encodeURIComponent(m.name || 'image')}` : '');
-/* page tags carry the index fields: cat:sculpture reg:fine art cy:958421 sub:42, 46, 49mm, plus flags roman, dark, contain, inquire */
+/* page tags carry the index fields: cat:art reg:fine art cy:958421 sub:42, 46, 49mm, plus flags roman, dark, contain, inquire */
 function parseTags(tags) {
   const o = {};
   /* Cargo gives tags as {tag, url} objects */
@@ -50,10 +50,12 @@ function parseTags(tags) {
   return o;
 }
 let ITEMS = [], ABOUT = null;
-const CATS = ['all', 'object', 'wearable', 'sculpture', 'mixed media', 'documentation'];
+const CATS = ['all', 'object', 'wearable', 'art', 'documentation'];
+/* sculpture and mixed media were merged into art (261006); old tags still count */
+const CAT_ALIAS = { sculpture: 'art', 'mixed media': 'art', 'fine art': 'art' };
 function itemFrom(p) {
   const tg = parseTags(p.tags);
-  return { page: p.purl, id: p.id, title: p.title, sort: p.sort, cat: tg.cat || '', reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
+  return { page: p.purl, id: p.id, title: p.title, sort: p.sort, cat: CAT_ALIAS[(tg.cat || '').toLowerCase()] || (tg.cat || '').toLowerCase(), reg: tg.reg || '', sub: tg.sub || '', cypher: /^\d{6}$/.test(tg.cy || '') ? tg.cy : '', it: !tg.roman, dark: !!tg.dark, fit: tg.contain ? 'contain' : '', inquire: !!tg.inquire, draft: !!tg.draft, thumb: p.thumbnail || null, img: imgURL(p.thumbnail, 900) };
 }
 async function loadIndex() {
   let r = [];
@@ -213,7 +215,7 @@ const pageCy = (route) => { const it = ITEMS.find((i) => i.page === route); retu
 const view = $('#view');
 {{flight}}
 /* old addresses from the previous site; values: 'index', 'index:<filter>', 'about', or 'burner' (the production burner page) */
-const OLD = { about: 'about', 'about-1': 'about', art: 'index:sculpture', burners: 'burner', shop: 'index', store: 'index' };
+const OLD = { about: 'about', 'about-1': 'about', art: 'index:art', burners: 'burner', shop: 'index', store: 'index' };
 function oldTarget(seg) {
   const t = OLD[seg.toLowerCase()];
   if (!t) return null;
