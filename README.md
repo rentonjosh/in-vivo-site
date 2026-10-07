@@ -4,19 +4,14 @@ Custom CSS and JS for invivo.works on Cargo. Cargo holds the content (pages, ima
 
 ## How it loads
 
-Cargo loads two files from this repo through jsDelivr. Paste this once into Cargo (Site Settings, custom HTML in the head):
+Cargo loads the build through a small loader pasted once into Site Settings → CSS/HTML → HTML (then **Update** and **Publish changes**). The loaders are in `src/loader-sandbox.html` and `src/loader-live.html`.
 
-```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/in-vivo.css">
-<script defer src="https://cdn.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/in-vivo.js"></script>
-```
+- The loader asks GitHub for the newest commit on `main` and loads `dist/app.js` and `dist/app.css` from jsDelivr pinned to that commit, so no cache can ever serve an old build. A push is live on the next page load.
+- It never runs inside Cargo's editor (framed preview or `/edit`).
+- The live site's loader only switches on with `?ivdev` in the address (remembered for that browser tab; `?ivdev=0` turns it off). Visitors see the current site.
+- Before launch, the live loader should pin a release tag instead of asking GitHub for `main`.
 
-After that, changes ship by pushing to `main`. Those two files are a small, stable bootstrap: browsers cache them for a week, so they never change. The bootstrap loads the real build (`dist/app.js`, `dist/app.css`) with a per-minute cache key, so a push shows up within a minute or two once jsDelivr is refreshed:
-
-- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/app.js
-- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/app.css
-
-The live site loads the build only for visitors who open it with `?ivdev` (remembered for that browser tab; `?ivdev=0` turns it off). Before launch, the live site switches to a tagged version so a work-in-progress push never reaches it.
+`dist/in-vivo.js` and `dist/in-vivo.css` are retired, empty files kept for old references.
 
 ## Build
 
