@@ -11,19 +11,29 @@ Cargo loads two files from this repo through jsDelivr. Paste this once into Carg
 <script defer src="https://cdn.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/in-vivo.js"></script>
 ```
 
-After that, changes ship by pushing to `main`. jsDelivr caches `@main` for up to 12 hours; after a push, open these two URLs once to refresh it:
+After that, changes ship by pushing to `main`. Those two files are a small, stable bootstrap: browsers cache them for a week, so they never change. The bootstrap loads the real build (`dist/app.js`, `dist/app.css`) with a per-minute cache key, so a push shows up within a minute or two once jsDelivr is refreshed:
 
-- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/in-vivo.css
-- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/in-vivo.js
+- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/app.js
+- https://purge.jsdelivr.net/gh/rentonjosh/in-vivo-site@main/dist/app.css
 
-The live site should load a tagged version (`@v1.0.0` instead of `@main`) so a work-in-progress push never reaches it. The sandbox (in-vivo-copy.cargo.site) loads `@main`.
+The live site loads the build only for visitors who open it with `?ivdev` (remembered for that browser tab; `?ivdev=0` turns it off). Before launch, the live site switches to a tagged version so a work-in-progress push never reaches it.
+
+## Build
+
+`python3 tools/build.py <version>` writes `dist/` from `src/` (styles, markup, app template, bootstrap), the reusable prototype code in `tools/parts.json`, and the morph shapes inside `reference/prototype.html`.
+
+## Content model in Cargo
+
+Each work is a Cargo page. Its tags fill the index: `cat:` (object, wearable, sculpture, mixed media, documentation), `reg:` (fine art, hybrid, statement, process...), `cy:` (6-digit cypher), `sub:` (grey label after the title), and flags `roman` (title not italic), `dark`, `contain`, `inquire`. The first image is the cover; text lines `label: value` become info rows and a short lowercase line on its own starts a section. A Cargo product placed in the page becomes the buy panel.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `dist/in-vivo.css` | Styles Cargo loads. |
-| `dist/in-vivo.js` | Behavior Cargo loads. |
+| `dist/in-vivo.js`, `dist/in-vivo.css` | Stable bootstrap Cargo loads. |
+| `dist/app.js`, `dist/app.css` | The build. |
+| `src/` | Sources for the build. |
+| `tools/build.py` | Builds `dist/`. |
 | `reference/prototype.html` | The approved browser prototype. The source of truth for how everything should look and move. Open it in a browser to compare. |
 
 ## Rules
