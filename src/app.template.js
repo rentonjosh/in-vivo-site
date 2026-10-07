@@ -11,7 +11,9 @@ const MARKUP = %%MARKUP%%;
 
 /* Cargo is the content source: wait until its store has the site model */
 function whenCargo(cb) {
-  const ok = () => window.store && store.getState && store.getState().site && store.getState().site.id;
+  /* Cargo's store has the site, and our stylesheet has applied (the loader adds the CSS and JS together, so the script can run first) */
+  const cssReady = () => getComputedStyle(document.documentElement).getPropertyValue('--iv-css').trim() === '1';
+  const ok = () => window.store && store.getState && store.getState().site && store.getState().site.id && cssReady();
   /* never run inside Cargo's editor */
   const framed = (() => { try { return window.top !== window.self; } catch (e) { return true; } })();
   const editing = () => framed || /^\/(edit|client-side-rendering)/.test(location.pathname) || (window.store && store.getState && ((store.getState().frontendState || {}).adminMode || (store.getState().frontendState || {}).inAdminFrame));
