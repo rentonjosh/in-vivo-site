@@ -164,7 +164,7 @@ function pageModel(p) {
   });
   /* "price: $3,600" on an inquiry work moves into the inquire bar */
   let price = '';
-  groups.forEach((g) => { g.rows = g.rows.filter((x) => { if (x.k && /^price$/i.test(plain(x.k))) { price = plain(x.v); return false; } return true; }); });
+  groups.forEach((g) => g.rows.forEach((x) => { if (x.k && /^price$/i.test(plain(x.k))) price = plain(x.v); }));
   return { images, products, groups, notes, price };
 }
 /* the six-spoke asterisk, red, drawn so it never depends on a font */
@@ -212,6 +212,7 @@ function currentVariant() {
 }
 function pageHTML(p, item) {
   const model = pageModel(p);
+  if (item && item.inquire && model.price) model.groups.forEach((g) => { g.rows = g.rows.filter((x) => !(x.k && /^price$/i.test(plain(x.k)))); });
   const title = item ? item.title : p.title;
   const it = item ? item.it : false;
   const bg = item && item.dark ? '#0e0e0e' : '#ececec';
