@@ -1,3 +1,1 @@
-/* in vivo bootstrap styles. Stable, cached by browsers: hold Cargo's page back while the build loads, so it never flashes. */
-html.iv-loaded:not(.iv-on) body > .content{visibility:hidden}
-html.iv-loaded{--iv-loaded:1}
+/* in vivo: retired, see dist/in-vivo.js */
