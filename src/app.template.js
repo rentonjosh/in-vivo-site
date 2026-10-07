@@ -234,7 +234,7 @@ const pageCy = (route) => { const it = ITEMS.find((i) => i.page === route); retu
 const view = $('#view');
 {{flight}}
 /* old addresses from the previous site; values: 'index', 'index:<filter>', 'about', or 'burner' (the production burner page) */
-const OLD = { about: 'about', 'about-1': 'about', art: 'index:art', burners: 'burner', shop: 'index', store: 'index' };
+const OLD = { about: 'about', 'about-1': 'about', art: 'index:art', shop: 'index', store: 'index' };
 function oldTarget(seg) {
   const t = OLD[seg.toLowerCase()];
   if (!t) return null;
