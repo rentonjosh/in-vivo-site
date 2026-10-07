@@ -12,9 +12,11 @@ const MARKUP = %%MARKUP%%;
 /* Cargo is the content source: wait until its store has the site model */
 function whenCargo(cb) {
   const ok = () => window.store && store.getState && store.getState().site && store.getState().site.id;
-  if (ok()) { cb(); return; }
+  /* never run inside Cargo's editor */
+  const editing = () => /^\/edit(\/|$)/.test(location.pathname) || (window.store && store.getState && (store.getState().frontendState || {}).adminMode);
+  if (ok()) { if (!editing()) cb(); return; }
   let n = 0;
-  const t = setInterval(() => { if (ok() || ++n > 400) { clearInterval(t); if (ok()) cb(); } }, 25);
+  const t = setInterval(() => { if (ok() || ++n > 400) { clearInterval(t); if (ok() && !editing()) cb(); } }, 25);
 }
 whenCargo(boot);
 
