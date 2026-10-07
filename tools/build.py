@@ -33,6 +33,7 @@ pn = must(pn, '<a class="row about" href="#about"><span>about</span><span class=
           '${ABOUT ? `<a class="row about" href="/${esc(ABOUT)}"><span>about</span><span class="reg"></span><span class="meta" aria-hidden="true">→</span></a>` : \'\'}')
 pn = must(pn, '<span class="meta">${i.cat}</span>', '<span class="meta">${esc(i.cat)}</span>')
 parts['panel'] = pn
+parts['views'] = must(parts['views'], 'src="${src}" alt="${alt}">', 'src="${src}"${setOf(src) ? ` srcset="${setOf(src)}" sizes="${SIZES_IMG}"` : \'\'} alt="${alt}"${cls.includes(\'first\') ? \'\' : \' loading="lazy"\'} decoding="async">')
 parts['flight'] = must(parts['flight'], 'document.body.appendChild(fly);', 'root.appendChild(fly);')
 parts['split'] = must(parts['split'], "getComputedStyle(document.documentElement).getPropertyValue('--g')", "getComputedStyle(root).getPropertyValue('--g')")
 
@@ -54,4 +55,6 @@ assert '{{' not in js and '%%' not in js
 (R / 'dist/app.js').write_text(js)
 (R / 'dist/in-vivo.js').write_text((R / 'src/bootstrap.js').read_text())
 (R / 'dist/in-vivo.css').write_text((R / 'src/bootstrap.css').read_text())
+ld = (R / 'src/loader-launch.html').read_text()
+(R / 'dist/loader-launch.html').write_text(must(ld, '%%TAG%%', 'v' + version, 2))
 print('built', version, len(out_css), 'css bytes', len(js), 'js bytes')

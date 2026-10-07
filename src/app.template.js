@@ -36,6 +36,11 @@ document.documentElement.classList.add('iv-on');
 /* ---------- content, read from Cargo ---------- */
 const API = 'https://api.cargo.site/v1';
 const siteId = () => store.getState().site.id;
+/* responsive images: Cargo's freight server resizes by width, so each image offers a width ladder */
+const WIDTHS = [480, 800, 1200, 1800];
+const setOf = (u) => (/\/w\/\d+\//.test(u) ? WIDTHS.map((w) => u.replace(/\/w\/\d+\//, `/w/${w}/`) + ` ${w}w`).join(', ') : '');
+const SIZES_TILE = '(max-width:720px) 50vw, (max-width:1080px) 33vw, 25vw';
+const SIZES_IMG = '(max-width:720px) 100vw, (max-width:1080px) 33vw, 25vw';
 const imgURL = (m, w = 1400) => (m && m.hash ? `https://freight.cargo.site/w/${w}/q/75/i/${m.hash}/${encodeURIComponent(m.name || 'image')}` : '');
 /* page tags carry the index fields: cat:sculpture reg:fine art cy:958421 sub:42, 46, 49mm, plus flags roman, dark, contain, inquire */
 function parseTags(tags) {
@@ -99,7 +104,7 @@ const S = { route: 'index', filter: 'all', open: false, cart: 0, indexY: 0, from
 
 /* ---------- views ---------- */
 function tileHTML(i, k) {
-  const media = i.img ? `<img class="media${i.fit === 'contain' ? ' contain' : ''}" src="${i.img}" alt="${esc(i.title)}" loading="lazy">` : `<span class="ph">${esc(i.title)}</span>`;
+  const media = i.img ? `<img class="media${i.fit === 'contain' ? ' contain' : ''}" src="${i.img}"${setOf(i.img) ? ` srcset="${setOf(i.img)}" sizes="${SIZES_TILE}"` : ''} alt="${esc(i.title)}" loading="lazy" decoding="async">` : `<span class="ph">${esc(i.title)}</span>`;
   return `<a class="tile" data-k="${k}" data-cat="${esc(i.cat)}" href="/${esc(i.page)}" style="background:${i.dark ? '#0e0e0e' : (i.fit === 'contain' ? '#f2f2f2' : '#ececec')}">${media}<span class="cap frost"><span>${t(i)}</span>${i.sub ? `<span class="sub">${esc(i.sub)}</span>` : ''}</span></a>`;
 }
 function indexHTML() {
@@ -207,9 +212,22 @@ const pageCy = (route) => { const it = ITEMS.find((i) => i.page === route); retu
 /* ---------- routing and shared-element flights ---------- */
 const view = $('#view');
 {{flight}}
+/* old addresses from the previous site; values: 'index', 'about', or 'burner' (the production burner page) */
+const OLD = { about: 'about', 'about-1': 'about', art: 'index', burners: 'burner', shop: 'index', store: 'index' };
+function oldTarget(seg) {
+  const t = OLD[seg.toLowerCase()];
+  if (!t) return null;
+  if (t === 'index') return 'index';
+  if (t === 'about') return ABOUT || null;
+  if (t === 'burner') { const b = ITEMS.find((i) => /^burner/i.test(i.page) && !/1-?of-?1/i.test(i.page) && !/1-1$/.test(i.page)); return b ? b.page : 'index'; }
+  return null;
+}
 function routeFromPath() {
-  const seg = decodeURIComponent(location.pathname.replace(/^\/+/, '').split('/')[0] || '');
-  return seg || 'index';
+  let seg = decodeURIComponent(location.pathname.replace(/^\/+/, '').split('/')[0] || '');
+  if (!seg) return 'index';
+  const known = seg === ABOUT || ITEMS.some((i) => i.page === seg) || seg === 'cart';
+  if (!known) { const t = oldTarget(seg); if (t) { history.replaceState(history.state, '', t === 'index' ? '/' : '/' + t); seg = t; } }
+  return seg;
 }
 function renderIndex() {
   S.route = 'index';
@@ -227,7 +245,7 @@ async function openPage(purl, tileEl) {
   const [p] = await Promise.all([loadPage(purl), loadProducts()]);
   if (tok !== S.navTok) return;
   if (tileEl) tileEl.style.opacity = '';
-  if (!p) { toast('page not found'); renderIndex(); return; }
+  if (!p) { toast('page not found'); history.replaceState(null, '', '/'); renderIndex(); return; }
   S.route = purl;
   view.innerHTML = pageHTML(p, item);
   setDate(pageCy(purl)); setCat(pageCat(purl)); wireDetail();

@@ -9,7 +9,9 @@ Cargo loads the build through a small loader pasted once into Site Settings → 
 - The loader asks GitHub for the newest commit on `main` and loads `dist/app.js` and `dist/app.css` from jsDelivr pinned to that commit, so no cache can ever serve an old build. A push is live on the next page load.
 - It never runs inside Cargo's editor (framed preview or `/edit`).
 - The live site's loader only switches on with `?ivdev` in the address (remembered for that browser tab; `?ivdev=0` turns it off). Visitors see the current site.
-- Before launch, the live loader should pin a release tag instead of asking GitHub for `main`.
+- At launch, paste `dist/loader-launch.html` instead. It has no `?ivdev` gate and loads a fixed release tag (no GitHub API call, so no rate limit). To ship a later build: `python3 tools/build.py <version>`, commit, `git tag v<version>`, push the tag, then paste the new `dist/loader-launch.html` and Publish.
+- Old addresses from the previous site (`/about`, `/about-1`, `/art`, `/burners`, `/shop`, `/store`) are rewritten to their new place by the `OLD` table in `src/app.template.js`. `/process` and any other page address open that page if it is tagged; an unknown address falls back to the index.
+- Images carry a `srcset` width ladder (480 to 1800) from Cargo's freight server, so phones and desktop columns load only the size they show.
 
 `dist/in-vivo.js` and `dist/in-vivo.css` are retired, empty files kept for old references.
 
