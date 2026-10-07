@@ -212,12 +212,13 @@ const pageCy = (route) => { const it = ITEMS.find((i) => i.page === route); retu
 /* ---------- routing and shared-element flights ---------- */
 const view = $('#view');
 {{flight}}
-/* old addresses from the previous site; values: 'index', 'about', or 'burner' (the production burner page) */
-const OLD = { about: 'about', 'about-1': 'about', art: 'index', burners: 'burner', shop: 'index', store: 'index' };
+/* old addresses from the previous site; values: 'index', 'index:<filter>', 'about', or 'burner' (the production burner page) */
+const OLD = { about: 'about', 'about-1': 'about', art: 'index:sculpture', burners: 'burner', shop: 'index', store: 'index' };
 function oldTarget(seg) {
   const t = OLD[seg.toLowerCase()];
   if (!t) return null;
   if (t === 'index') return 'index';
+  if (t.startsWith('index:')) { const f = t.slice(6); if (CATS.includes(f)) S.filter = f; return 'index'; }
   if (t === 'about') return ABOUT || null;
   if (t === 'burner') { const b = ITEMS.find((i) => /^burner/i.test(i.page) && !/1-?of-?1/i.test(i.page) && !/1-1$/.test(i.page)); return b ? b.page : 'index'; }
   return null;
